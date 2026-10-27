@@ -1,0 +1,6 @@
+streamlit
+pandas
+matplotlib
+koreanize-matplotlib
+openpyxl
+xlrd
