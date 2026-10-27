@@ -7,10 +7,10 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
   <title>평가분석 · Exam Analysis</title>
   <link rel="icon" href="icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="style.css?v=0c78ca7">
+  <link rel="stylesheet" href="style.css?v=bars-1">
   <script defer src="vendor/xlsx.full.min.js"></script>
   <script defer src="analysis.js?v=0c78ca7"></script>
-  <script defer src="app.js?v=0c78ca7"></script>
+  <script defer src="app.js?v=bars-1"></script>
 </head>
 <body>
   <a class="skip" href="#main">본문으로 이동</a>
@@ -51,7 +51,7 @@
       </section>
       <section id="items"><div class="section-heading"><div><div class="eyebrow">ITEM ANALYSIS</div><h2>문항 살펴보기</h2></div><p>누가, 어떤 보기를 선택했을까요?</p></div>
         <div class="toolbar"><label>문항 정렬 <select id="sort-select"><option value="number">문항번호 순</option><option value="hard">정답률 낮은 순</option><option value="easy">정답률 높은 순</option></select></label><span class="legend"><i></i> 정답 보기 강조</span></div>
-        <p class="method-note">정답률은 0~1, 변별도는 −1~1로 표시합니다. 변별도는 원본처럼 총점 73·27백분위를 기준으로 나눈 상·하위 약 27% 집단의 정답률 차이입니다. 동점자에 따라 인원이 달라지며, 집단이 비면 ‘—’로 표시합니다. A~E 분류는 고정분할점수를 유지합니다.<br>각 정답률의 분모는 해당 집단 전체 학생 수이며 무응답·기타도 오답에 포함합니다. 학생이 없는 수준은 ‘—’로 표시하며, 선그래프는 해당 지점에서 끊깁니다.</p>
+        <p class="method-note">정답률은 0~1, 변별도는 −1~1로 표시합니다. 변별도는 원본처럼 총점 73·27백분위를 기준으로 나눈 상·하위 약 27% 집단의 정답률 차이입니다. 동점자에 따라 인원이 달라지며, 집단이 비면 ‘—’로 표시합니다. A~E 분류는 고정분할점수를 유지합니다.<br>각 정답률의 분모는 해당 집단 전체 학생 수이며 무응답·기타도 오답에 포함합니다. 학생이 없는 수준은 ‘—’와 ‘해당 학생 없음’으로 표시합니다. 막대그래프의 금색은 정답 보기입니다.</p>
         <div id="question-cards" class="question-grid"></div><div class="pagination"><button id="prev-button" class="secondary">← 이전</button><span id="page-label" aria-live="polite"></span><button id="next-button" class="secondary">다음 →</button></div>
       </section>
     </div>

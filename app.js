@@ -2,7 +2,6 @@
 const EA = window.ExamAnalysis;
 const $ = id => document.getElementById(id);
 const colors = ['#176b61', '#4c8e72', '#96b477', '#c5aa65', '#bf816a'];
-const choiceColors = ['#4a7291', '#6f8d6a', '#9b78a5', '#bf8660', '#778792'];
 let current = null, summary = null, page = 0, busy = false;
 const perPage = 6;
 const percent = n => n === null ? '—' : `${n.toFixed(1)}%`;
@@ -43,36 +42,29 @@ function histogram() {
   svg.append(svgElement('text', {x:left, y:15, fill:'#8a9587', 'font-size':9}, '학생 수(명)'));
   return svg;
 }
-function lineChart(q) {
-  const w = 420, h = 200, left = 35, right = 397, top = 16, bottom = 167;
-  const label = `문항 ${q.id}의 성취수준별 보기 선택 비율. 상세 수치는 아래 표에서 확인할 수 있습니다.`;
-  const svg = svgCanvas(w, h, label);
-  const x = i => left + i * (right-left)/4;
+function barChart(q, stats, label, color) {
+  const width = 290, height = 192, left = 34, right = 279, top = 24, bottom = 160;
+  const svg = svgCanvas(width, height, `문항 ${q.id} · ${label} 보기 선택 비율. 정답 ${q.answer}번을 금색으로 표시합니다.`);
   const y = rate => bottom - rate / 100 * (bottom-top);
   for (const rate of [0,25,50,75,100]) {
-    svg.append(svgElement('line', {x1:left, x2:right, y1:y(rate), y2:y(rate), stroke:'#e8ede2', 'stroke-dasharray':rate ? '3 4' : ''}));
-    svg.append(svgElement('text', {x:left-8, y:y(rate)+3, 'text-anchor':'end', fill:'#8a9587', 'font-size':9}, `${rate}%`));
+    svg.append(svgElement('line', {x1:left,x2:right,y1:y(rate),y2:y(rate),stroke:'#e8ede2'}));
+    svg.append(svgElement('text', {x:left-6,y:y(rate)+3,'text-anchor':'end',fill:'#7a8972','font-size':9}, `${rate}%`));
   }
-  EA.levels.forEach((level, i) => svg.append(svgElement('text', {x:x(i), y:bottom+20, 'text-anchor':'middle', fill:'#65785d', 'font-size':11}, level)));
-  [1,2,3,4,5].filter(c => c !== q.answer).concat(q.answer).forEach(choice => {
-    const correct = choice === q.answer, color = correct ? '#b79134' : choiceColors[choice-1];
-    let path = '', lastPresent = false;
-    EA.levels.forEach((level, i) => {
-      const rate = q.groups[level].ratios[choice-1];
-      if (rate === null) { lastPresent = false; return; }
-      path += `${lastPresent ? 'L' : 'M'}${x(i)},${y(rate)} `;
-      lastPresent = true;
-    });
-    svg.append(svgElement('path', {d:path, fill:'none', stroke:color, 'stroke-width':correct ? 3 : 1.4,
-      'stroke-opacity':correct ? 1 : .6}));
-    EA.levels.forEach((level, i) => {
-      const rate = q.groups[level].ratios[choice-1];
-      if (rate === null) return;
-      const point = svgElement('circle', {cx:x(i),cy:y(rate),r:correct ? 3.8 : 2,fill:color});
-      point.append(svgElement('title', {}, `${level} · ${choice}번 ${rate.toFixed(1)}%`));
-      svg.append(point);
-    });
-  });
+  if (!stats.n) {
+    svg.append(svgElement('text', {x:(left+right)/2,y:94,'text-anchor':'middle',fill:'#7a8972','font-size':13}, '해당 학생 없음'));
+  }
+  for (let i = 0; i < 5; i++) {
+    const x = left + i * (right-left)/5 + 9, barWidth = 30;
+    const value = stats.ratios[i];
+    if (value !== null) {
+      const bar = svgElement('rect', {x,y:y(value),width:barWidth,height:bottom-y(value),rx:2,
+        fill:i+1===q.answer ? '#d7ae36' : color});
+      bar.append(svgElement('title', {}, `${label} · ${i+1}번 ${value.toFixed(1)}% (${stats.counts[i]}명)`));
+      svg.append(bar);
+      svg.append(svgElement('text', {x:x+barWidth/2,y:y(value)-6,'text-anchor':'middle',fill:'#465740','font-size':10}, `${value.toFixed(1)}%`));
+    }
+    svg.append(svgElement('text', {x:x+barWidth/2,y:bottom+18,'text-anchor':'middle',fill:'#65785d','font-size':11}, `${i+1}번`));
+  }
   return svg;
 }
 function questionCard(q) {
@@ -89,14 +81,15 @@ function questionCard(q) {
   discriminationMetric.append(text('span', '변별도'), text('strong', q.discrimination === null ? '—' : q.discrimination.toFixed(2)),
     text('small', q.discrimination === null ? '상·하위 집단을 나눌 수 없음' : '상위 정답률 − 하위 정답률'));
   rate.append(correctMetric, discriminationMetric);
-  const lineLegend = text('div', '', 'line-legend');
-  for (let choice = 1; choice <= 5; choice++) {
-    const label = text('span', `${choice}번${choice === q.answer ? ' · 정답' : ''}`);
-    const swatch = document.createElement('i');
-    swatch.style.background = choice === q.answer ? '#b79134' : choiceColors[choice-1];
-    label.prepend(swatch); lineLegend.append(label);
+  card.append(header, rate);
+  const charts = text('div', '', 'bar-panels');
+  const panels = [['전체',q.total,'#87958a'],...EA.levels.map((level,i) => [level,q.groups[level],colors[i]])];
+  for (const [label,stats,color] of panels) {
+    const panel = text('section', '', 'bar-panel');
+    panel.append(text('h4', `${label} (${stats.n}명)`), barChart(q,stats,label,color));
+    charts.append(panel);
   }
-  card.append(header, rate, lineLegend, lineChart(q));
+  card.append(charts);
   const table = text('table', '', 'correct-table');
   const caption = text('caption', '성취수준별 정답률');
   caption.className = 'sr-only';
