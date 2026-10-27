@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="나이스 답정오표로 살펴보는 중학교 문항 분석. 과목총점 90·80·70·60점 기준으로 분석합니다.">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>평가분석 · Exam Analysis</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+  <script defer src="vendor/xlsx.full.min.js"></script>
+  <script defer src="analysis.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <a class="skip" href="#main">본문으로 이동</a>
+  <aside class="sidebar">
+    <a class="brand" href="./"><span class="brandmark" aria-hidden="true">▥</span> 평가분석<span class="brand-en">EXAM ANALYSIS</span></a>
+    <div class="sidebar-label">분석 워크스페이스</div>
+    <nav aria-label="주요 메뉴"><a href="#upload"><span>01</span> 자료 가져오기</a><a href="#overview"><span>02</span> 평가 개요</a><a href="#items"><span>03</span> 문항 살펴보기</a></nav>
+    <div class="criteria"><div class="sidebar-label">고정분할점수 · 100점 기준</div><p><b>A</b><span>90점 이상</span></p><p><b>B</b><span>80점 이상</span></p><p><b>C</b><span>70점 이상</span></p><p><b>D</b><span>60점 이상</span></p><p><b>E</b><span>60점 미만</span></p></div>
+    <div class="local-note"><span aria-hidden="true">◇</span><strong>파일은 내 브라우저 안에</strong><p>학생 자료를 서버로 보내거나 저장하지 않습니다.</p></div>
+    <a class="source-link" href="https://github.com/chakfzk/exam-analysis" target="_blank" rel="noopener noreferrer">GitHub에서 코드 보기 ↗</a>
+  </aside>
+  <main id="main">
+    <header class="topbar"><span>중학교 · 문항 분석 도구</span><span class="privacy-pill">● 브라우저에서 분석</span></header>
+    <section id="upload" class="intro">
+      <div class="eyebrow">FROM SCORES TO INSIGHTS</div>
+      <h1>점수 너머,<br><span>문항을 살펴보세요.</span></h1>
+      <p class="lead">나이스 답정오표로 성취수준별 응답을 한눈에.<br>다음 수업의 실마리를 찾아보세요.</p>
+      <div class="upload-panel" id="dropzone">
+        <div class="upload-icon" aria-hidden="true">↥</div>
+        <h2>교과목별학생답정오표 가져오기</h2>
+        <p>같은 시험의 학급별 엑셀 파일을 함께 선택하세요.</p>
+        <label class="primary upload-button" for="file-input">엑셀 파일 선택 <span aria-hidden="true">↗</span></label>
+        <input id="file-input" type="file" accept=".xlsx,.xls" multiple>
+        <span class="file-hint">.xlsx · .xls / 여기에 파일을 놓아도 됩니다</span>
+      </div>
+      <div class="upload-bottom"><button class="text-button" id="demo-button">예시 데이터로 먼저 둘러보기 <span aria-hidden="true">→</span></button><details class="help"><summary>나이스에서 파일을 받는 방법</summary><p>교과담임 → 지필평가조회/통계 → 지필평가조회 → 교과목별학생답정오표에서 학급별 파일을 저장하세요. 문항번호·정답·배점 다음에 학생 행이 있는 원본 양식을 사용합니다. 총점 열은 ‘과목총점’, 만점은 100점이어야 합니다.</p></details></div>
+      <div id="status" role="status" aria-live="polite"></div>
+      <div id="error" class="error" role="alert" hidden></div>
+    </section>
+    <div id="empty-state" class="empty-state"><span>01 — 03</span><p>파일을 가져오면 분석이 시작됩니다.</p><small>성취수준 분포 · 문항별 정답률 · 보기 선택 비율</small></div>
+    <div id="results" hidden>
+      <div class="result-meta"><span id="file-meta"></span><div><button id="download-button" class="secondary">정답률 CSV 저장 ↓</button><button id="reset-button" class="text-button">자료 지우기</button></div></div>
+      <div id="demo-notice" class="notice" hidden>지금은 가상 예시 데이터를 보고 있습니다. 실제 학생의 분석 결과가 아닙니다.</div>
+      <section id="overview"><div class="section-heading"><div><div class="eyebrow">OVERVIEW</div><h2>평가 개요</h2></div><p>과목총점 기준으로 살펴보는 이번 시험</p></div>
+        <div class="stats"><article><span>분석 학생</span><strong id="student-count"></strong><small>선택한 학급 전체</small></article><article><span>과목총점 평균</span><strong id="score-mean"></strong><small>100점 만점</small></article><article><span>분석 문항</span><strong id="question-count"></strong><small>객관식 · 보기 1~5</small></article></div>
+        <div class="overview-grid"><article class="panel"><div class="panel-heading"><h3>성취수준별 인원</h3><span>A — E</span></div><div id="level-bars"></div></article><article class="panel"><div class="panel-heading"><h3>과목총점 분포</h3><span>10점 구간</span></div><div id="histogram"></div><p class="chart-note">마지막 구간은 90~100점이며, 나머지는 상한 점수를 포함하지 않습니다.</p></article></div>
+        <p class="method-note">분류 기준: A ≥ 90 · B ≥ 80 · C ≥ 70 · D ≥ 60 · E &lt; 60<br>업로드한 지필평가 점수로 구분합니다. 수행평가 등을 합산한 학기말 성취도와 다를 수 있습니다.</p>
+      </section>
+      <section id="items"><div class="section-heading"><div><div class="eyebrow">ITEM ANALYSIS</div><h2>문항 살펴보기</h2></div><p>누가, 어떤 보기를 선택했을까요?</p></div>
+        <div class="toolbar"><label>문항 정렬 <select id="sort-select"><option value="number">문항번호 순</option><option value="hard">정답률 낮은 순</option><option value="easy">정답률 높은 순</option></select></label><span class="legend"><i></i> 정답 보기 강조</span></div>
+        <p class="method-note">정답률의 분모는 각 집단의 전체 학생 수입니다. 무응답·기타 응답도 오답에 포함합니다. 학생이 없는 수준은 ‘—’로 표시하며, 선그래프는 해당 지점에서 끊깁니다.</p>
+        <div id="question-cards" class="question-grid"></div><div class="pagination"><button id="prev-button" class="secondary">← 이전</button><span id="page-label" aria-live="polite"></span><button id="next-button" class="secondary">다음 →</button></div>
+      </section>
+    </div>
+    <footer><strong>평가분석</strong><span>수업을 돌아보는 또 하나의 시선.</span><span>분석 자료는 새로고침하거나 자료를 지우면 사라집니다.</span></footer>
+  </main>
+</body>
+</html>
