@@ -74,15 +74,33 @@
     };
     const histogram = Array(10).fill(0);
     students.forEach(s => histogram[Math.min(9, Math.floor(s.score / 10))]++);
+    // Match pandas' default linear quantiles from the original application.
+    const scores = students.map(s => s.score).sort((a, b) => a - b);
+    const quantile = p => {
+      const position = (scores.length - 1) * p, low = Math.floor(position);
+      return scores[low] + (scores[Math.ceil(position)] - scores[low]) * (position - low);
+    };
+    const upperCut = quantile(.73), lowerCut = quantile(.27);
+    const upper = students.filter(s => s.score >= upperCut);
+    // Upper classification takes precedence if both thresholds coincide.
+    const lower = students.filter(s => s.score < upperCut && s.score <= lowerCut);
     return {n: students.length, mean: students.reduce((sum, s) => sum + s.score, 0) / students.length,
       groups: levels.map((level, i) => ({level, range: ranges[i], n: groups[level].length})), histogram,
-      questions: questions.map(q => ({...q, total: stats(students, q),
-        groups: Object.fromEntries(levels.map(level => [level, stats(groups[level], q)]))}))};
+      questions: questions.map(q => {
+        const u = stats(upper, q), l = stats(lower, q);
+        return {...q, total: stats(students, q), upper: u, lower: l, upperCut, lowerCut,
+          discrimination: u.correct === null || l.correct === null ? null : (u.correct - l.correct) / 100,
+          groups: Object.fromEntries(levels.map(level => [level, stats(groups[level], q)]))};
+      })};
   }
   function csv(summary) {
     const header = ['문항', '정답', '전체 인원', '전체 정답률(%)', '전체 무응답·기타 수',
+      '변별도', '상위 집단 인원', '상위 정답률(%)', '하위 집단 인원', '하위 정답률(%)',
       ...levels.flatMap(level => [`${level} 인원`, `${level} 정답률(%)`])];
     const rows = summary.questions.map(q => [q.id, q.answer, q.total.n, q.total.correct.toFixed(1), q.total.counts[5],
+      q.discrimination === null ? '' : q.discrimination.toFixed(2), q.upper.n,
+      q.upper.correct === null ? '' : q.upper.correct.toFixed(1), q.lower.n,
+      q.lower.correct === null ? '' : q.lower.correct.toFixed(1),
       ...levels.flatMap(level => [q.groups[level].n, q.groups[level].correct === null ? '' : q.groups[level].correct.toFixed(1)])]);
     return '\uFEFF' + [header, ...rows].map(row => row.join(',')).join('\r\n');
   }

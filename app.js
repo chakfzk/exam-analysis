@@ -81,10 +81,14 @@ function questionCard(q) {
   const title = text('h3', `문항 ${String(q.id).padStart(2,'0')}`);
   title.append(text('span', 'ITEM'));
   header.append(title, text('span', `정답 ${q.answer}번`));
-  const rate = text('div', '', 'correct-summary');
-  const number = text('strong', q.total.correct.toFixed(1));
-  number.append(text('small','%'));
-  rate.append(text('span', '전체 정답률'), number);
+  const rate = text('div', '', 'item-metrics');
+  const correctMetric = text('div', '', 'item-metric');
+  correctMetric.append(text('span', '정답률'), text('strong', (q.total.correct / 100).toFixed(2)),
+    text('small', `${q.total.correct.toFixed(1)}% · 전체 ${q.total.n}명`));
+  const discriminationMetric = text('div', '', `item-metric${q.discrimination !== null && q.discrimination < 0 ? ' negative' : ''}`);
+  discriminationMetric.append(text('span', '변별도'), text('strong', q.discrimination === null ? '—' : q.discrimination.toFixed(2)),
+    text('small', q.discrimination === null ? '상·하위 집단을 나눌 수 없음' : '상위 정답률 − 하위 정답률'));
+  rate.append(correctMetric, discriminationMetric);
   const lineLegend = text('div', '', 'line-legend');
   for (let choice = 1; choice <= 5; choice++) {
     const label = text('span', `${choice}번${choice === q.answer ? ' · 정답' : ''}`);
@@ -110,6 +114,7 @@ function questionCard(q) {
     choices.append(el);
   });
   card.append(choices);
+  card.append(text('p', `변별도 계산: 상위 ${q.upper.n}명 정답률 ${percent(q.upper.correct)} · 하위 ${q.lower.n}명 정답률 ${percent(q.lower.correct)}`, 'discrimination-note'));
   const details = document.createElement('details');
   details.append(text('summary', `성취수준별 보기 선택 비율 펼치기 · 무응답·기타 ${q.total.counts[5]}명`));
   const wrap = text('div', '', 'table-scroll');
