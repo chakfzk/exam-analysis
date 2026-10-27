@@ -26,7 +26,7 @@ function svgCanvas(width, height, label) {
 function histogram() {
   const w = 420, h = 227, left = 31, bottom = 193, chartH = 152;
   const max = Math.max(...summary.histogram, 1);
-  const top = Math.max(5, Math.ceil(max / 5) * 5);
+  const top = Math.max(1, Math.ceil(max / 4)) * 4;
   const svg = svgCanvas(w, h, '과목총점의 10점 구간별 학생 수. 각 막대에 인원을 표시합니다.');
   for (let i = 0; i <= 4; i++) {
     const value = top * i / 4, y = bottom - i / 4 * chartH;
@@ -85,7 +85,14 @@ function questionCard(q) {
   const number = text('strong', q.total.correct.toFixed(1));
   number.append(text('small','%'));
   rate.append(text('span', '전체 정답률'), number);
-  card.append(header, rate, lineChart(q));
+  const lineLegend = text('div', '', 'line-legend');
+  for (let choice = 1; choice <= 5; choice++) {
+    const label = text('span', `${choice}번${choice === q.answer ? ' · 정답' : ''}`);
+    const swatch = document.createElement('i');
+    swatch.style.background = choice === q.answer ? '#b79134' : choiceColors[choice-1];
+    label.prepend(swatch); lineLegend.append(label);
+  }
+  card.append(header, rate, lineLegend, lineChart(q));
   const table = text('table', '', 'correct-table');
   const caption = text('caption', '성취수준별 정답률');
   caption.className = 'sr-only';
